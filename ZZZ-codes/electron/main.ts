@@ -1,6 +1,7 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, ipcMain } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import axios from 'axios'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -13,6 +14,9 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
   ? path.join(process.env.APP_ROOT, 'public')
   : RENDERER_DIST
+
+// 👉 URL de la API
+const API = 'https://api.ennead.cc/mihoyo/zenless/codes'
 
 let win: BrowserWindow | null = null
 
@@ -53,3 +57,9 @@ app.on('activate', () => {
 app.setAppUserModelId('com.andriy.zzz-codes')
 
 app.whenReady().then(createWindow)
+
+// ===== IPC: fetch de códigos =====
+ipcMain.handle('codes:fetch', async () => {
+  const { data } = await axios.get(API, { timeout: 10000 }) // { active, inactive }
+  return data
+})
