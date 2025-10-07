@@ -1,65 +1,62 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
-import { fileURLToPath } from 'node:url'
-import path from 'node:path'
-import axios from 'axios'
+// electron/main.cts
+process.on('unhandledRejection', (r) => console.error('[UNHANDLED REJECTION]', r));
+process.on('uncaughtException', (e) => console.error('[UNCAUGHT EXCEPTION]', e));
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
+import { app, BrowserWindow, ipcMain } from 'electron';
+import { getCache, setCache, getDb, type GameId } from './db';
+import { join } from 'node:path';
 
-process.env.APP_ROOT = path.join(__dirname, '..')
+const API_BASE = 'https://api.ennead.cc/mihoyo';
+const CODES_TTL = 15 * 60;
 
-export const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
-export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron')
-export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
-
-process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
-  ? path.join(process.env.APP_ROOT, 'public')
-  : RENDERER_DIST
-
-// 👉 URL de la API
-const API = 'https://api.ennead.cc/mihoyo/zenless/codes'
-
-let win: BrowserWindow | null = null
-
-function createWindow() {
-  win = new BrowserWindow({
-    icon: path.join(process.env.VITE_PUBLIC!, 'electron-vite.svg'),
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.mjs'),
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true,
-    },
-  })
-
-  win.webContents.on('did-finish-load', () => {
-    win?.webContents.send('main-process-message', new Date().toLocaleString())
-  })
-
-  if (VITE_DEV_SERVER_URL) {
-    win.loadURL(VITE_DEV_SERVER_URL)
-  } else {
-    win.loadFile(path.join(RENDERER_DIST, 'index.html'))
-  }
+async function fetchJson(url: string) {
+  const res = await fetch(url, { headers: { 'User-Agent': 'ZZZ-Codes/1.0' } });
+  if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+  return res.json();
 }
 
+function createWindow() {
+  const win = new BrowserWindow({
+    width: 1100,
+    height: 768,
+    webPreferences: {
+      preload: join(__dirname, 'preload.js'), // 👈 CJS
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  if (process.env.VITE_DEV_SERVER_URL) win.loadURL(process.env.VITE_DEV_SERVER_URL);
+  else win.loadFile(join(__dirname, '..', 'dist', 'index.html'));
+}
+
+function registerIpc() {
+  ipcMain.handle('codes:list', async (_evt, game: GameId) => {
+    const key = `${game}/codes`;
+    const cached = getCache(key);
+    if (cached) return cached;
+
+    const data = await fetchJson(`${API_BASE}/${game}/codes`);
+    setCache(key, data, CODES_TTL);
+    return data;
+  });
+
+  ipcMain.handle('codes:refresh', async (_evt, game: GameId) => {
+    const data = await fetchJson(`${API_BASE}/${game}/codes`);
+    setCache(`${game}/codes`, data, CODES_TTL);
+    return data;
+  });
+}
+
+app.whenReady().then(() => {
+  getDb();
+  registerIpc();
+  createWindow();
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+});
+
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-    win = null
-  }
-})
-
-app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) createWindow()
-})
-
-// Necesario para notificaciones nativas en Windows
-app.setAppUserModelId('com.andriy.zzz-codes')
-
-app.whenReady().then(createWindow)
-
-// ===== IPC: fetch de códigos =====
-ipcMain.handle('codes:fetch', async () => {
-  const { data } = await axios.get(API, { timeout: 10000 }) // { active, inactive }
-  return data
-})
+  if (process.platform !== 'darwin') app.quit();
+});
