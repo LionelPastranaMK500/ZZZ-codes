@@ -1,43 +1,47 @@
 // @see - https://www.electron.build/configuration/configuration
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "YourAppID",
+  "appId": "com.zzz.codes",
+  "productName": "ZZZ Codes",
   "asar": true,
-  "productName": "YourAppName",
+
+  // MUY IMPORTANTE para módulos nativos (.node)
+  "asarUnpack": ["**/*.node"],
+  "extraResources": [
+    // asegura que better-sqlite3 quede dentro del asar/unpack
+    { "from": "node_modules/better-sqlite3/build/Release", "to": "binaries", "filter": ["*.node"] }
+  ],
+
   "directories": {
     "output": "release/${version}"
   },
   "files": [
-    "dist",
-    "dist-electron"
+    "dist",           // renderer (Vite)
+    "dist-electron",  // main & preload generados por vite-plugin-electron
+    "package.json"
   ],
+
   "mac": {
-    "target": [
-      "dmg"
-    ],
+    "target": ["dmg"],
     "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
   },
+
   "win": {
     "target": [
-      {
-        "target": "nsis",
-        "arch": [
-          "x64"
-        ]
-      }
+      { "target": "nsis", "arch": ["x64"] }
     ],
     "artifactName": "${productName}-Windows-${version}-Setup.${ext}"
   },
+
   "nsis": {
     "oneClick": false,
     "perMachine": false,
     "allowToChangeInstallationDirectory": true,
     "deleteAppDataOnUninstall": false
   },
+
   "linux": {
-    "target": [
-      "AppImage"
-    ],
+    "target": ["AppImage"],
     "artifactName": "${productName}-Linux-${version}.${ext}"
   }
 }
