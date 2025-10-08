@@ -1,8 +1,4 @@
-// electron/main.cts
-process.on('unhandledRejection', (r) => console.error('[UNHANDLED REJECTION]', r));
-process.on('uncaughtException', (e) => console.error('[UNCAUGHT EXCEPTION]', e));
-
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 import { getCache, setCache, getDb, type GameId } from './db';
 import { join } from 'node:path';
 
@@ -20,14 +16,18 @@ function createWindow() {
     width: 1100,
     height: 768,
     webPreferences: {
-      preload: join(__dirname, 'preload.js'), // 👈 CJS
+      preload: join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
     },
   });
 
-  if (process.env.VITE_DEV_SERVER_URL) win.loadURL(process.env.VITE_DEV_SERVER_URL);
-  else win.loadFile(join(__dirname, '..', 'dist', 'index.html'));
+
+  if (process.env.VITE_DEV_SERVER_URL) {
+    win.loadURL(process.env.VITE_DEV_SERVER_URL);
+  } else {
+    win.loadFile(join(__dirname, '..', 'dist', 'index.html'));
+  }
 }
 
 function registerIpc() {
@@ -51,6 +51,7 @@ function registerIpc() {
 app.whenReady().then(() => {
   getDb();
   registerIpc();
+  Menu.setApplicationMenu(null);
   createWindow();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

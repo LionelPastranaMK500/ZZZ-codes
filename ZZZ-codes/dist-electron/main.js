@@ -79,8 +79,6 @@ function setCache(key, payload, ttlSeconds) {
     ttl_seconds: ttlSeconds
   });
 }
-process.on("unhandledRejection", (r) => console.error("[UNHANDLED REJECTION]", r));
-process.on("uncaughtException", (e) => console.error("[UNCAUGHT EXCEPTION]", e));
 const API_BASE = "https://api.ennead.cc/mihoyo";
 const CODES_TTL = 15 * 60;
 async function fetchJson(url) {
@@ -94,13 +92,15 @@ function createWindow() {
     height: 768,
     webPreferences: {
       preload: node_path.join(__dirname, "preload.js"),
-      // 👈 CJS
       contextIsolation: true,
       nodeIntegration: false
     }
   });
-  if (process.env.VITE_DEV_SERVER_URL) win.loadURL(process.env.VITE_DEV_SERVER_URL);
-  else win.loadFile(node_path.join(__dirname, "..", "dist", "index.html"));
+  if (process.env.VITE_DEV_SERVER_URL) {
+    win.loadURL(process.env.VITE_DEV_SERVER_URL);
+  } else {
+    win.loadFile(node_path.join(__dirname, "..", "dist", "index.html"));
+  }
 }
 function registerIpc() {
   electron.ipcMain.handle("codes:list", async (_evt, game) => {
@@ -120,6 +120,7 @@ function registerIpc() {
 electron.app.whenReady().then(() => {
   getDb();
   registerIpc();
+  electron.Menu.setApplicationMenu(null);
   createWindow();
   electron.app.on("activate", () => {
     if (electron.BrowserWindow.getAllWindows().length === 0) createWindow();
