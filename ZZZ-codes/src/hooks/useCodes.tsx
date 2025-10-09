@@ -1,25 +1,30 @@
-// src/hooks/useCodes.ts
-import { useState, useEffect } from "react";
+// src/hooks/useCodes.tsx
+import { useState, useEffect, useRef } from "react";
+// 👇 LÍNEA 1 CORREGIDA: Se quita la importación de "ToastId"
 import { toast } from "react-toastify";
 import type { Game, Payload } from "../types";
 import { toPayload } from "../lib/api-helpers";
 
 const GAMES: Game[] = ["genshin", "starrail", "honkai", "themis", "zenless"];
+const REFRESH_TOAST_ID = "refresh-toast";
 
 export function useCodes(currentGame: Game) {
-    // Estado principal
+    // --- Estados principales (sin cambios) ---
     const [data, setData] = useState<Payload>({ active: [], inactive: [] });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
-    // Caché en memoria para todos los juegos
     const [allData, setAllData] = useState<Partial<Record<Game, Payload>>>({});
     const [lastActiveByGame, setLastActiveByGame] = useState<Partial<Record<Game, Set<string>>>>({});
-
-    // Estado para resaltar códigos nuevos
     const [flash, setFlash] = useState<Set<string>>(new Set());
 
-    async function refreshAll(showToast = false) {
+    // --- NUEVOS ESTADOS para notificaciones inteligentes ---
+    const [isFocused, setIsFocused] = useState(true);
+    const [backgroundRefreshCount, setBackgroundRefreshCount] = useState(0);
+    // 👇 LÍNEA 2 CORREGIDA: Se usa el tipo correcto para el ID del toast
+    const toastId = useRef<string | number | null>(null);
+
+    // --- Lógica de actualización (modificada) ---
+    async function refreshAll(isPollingRefresh = false) {
         try {
             const results = await Promise.all(
                 GAMES.map(async (g) => {
@@ -37,7 +42,6 @@ export function useCodes(currentGame: Game) {
                 const prevActive = lastActiveByGame[g] ?? new Set<string>();
                 const currentActiveCodes = payload.active.map((c) => c.code);
                 const currentActiveSet = new Set(currentActiveCodes);
-
                 const newCodes = currentActiveCodes.filter((c) => !prevActive.has(c));
                 if (newCodes.length > 0) {
                     newPerGame.push({ game: g, codes: newCodes });
@@ -48,62 +52,93 @@ export function useCodes(currentGame: Game) {
             setAllData(nextAllData);
             setLastActiveByGame(nextLastActive);
 
-            if (showToast) {
-                // 👇 AQUÍ ESTÁ LA CORRECCIÓN
-                toast.info("Códigos actualizados", { icon: <span>🔄</span> });
-        }
+            // --- LÓGICA DE TOAST MODIFICADA ---
+            if (isPollingRefresh) {
+                if (isFocused) {
+                    if (toast.isActive(REFRESH_TOAST_ID) && toastId.current) {
+                        toast.update(toastId.current, { render: "Códigos actualizados" });
+                    } else {
+                        toastId.current = toast.info("Códigos actualizados", { icon: <span>🔄</span>, toastId: REFRESH_TOAST_ID });
+                    }
+                } else {
+                    setBackgroundRefreshCount((count) => count + 1);
+                }
+            }
 
+            // Notificaciones del sistema (sin cambios)
             if (newPerGame.length > 0 && typeof Notification !== "undefined" && Notification.permission === "granted") {
-            const body = newPerGame
-                .map(({ game: g, codes }) => `${g}: ${codes.slice(0, 4).join(", ")}${codes.length > 4 ? "…" : ""}`)
-                .join("\n");
-            new Notification("Nuevos códigos activos", { body });
+                const body = newPerGame
+                    .map(({ game: g, codes }) => `${g}: ${codes.slice(0, 4).join(", ")}${codes.length > 4 ? "…" : ""}`)
+                    .join("\n");
+                new Notification("Nuevos códigos activos", { body });
+            }
+
+            const newCodesForCurrentGame = newPerGame.find((x) => x.game === currentGame);
+            if (newCodesForCurrentGame?.codes.length) {
+                setFlash(new Set(newCodesForCurrentGame.codes));
+                setTimeout(() => setFlash(new Set()), 5000);
+            }
+        } catch (e: any) {
+            setError(e?.message ?? "Error al refrescar");
+            toast.error("Error al refrescar");
+        } finally {
+            setLoading(false);
         }
+    }
 
-        const newCodesForCurrentGame = newPerGame.find((x) => x.game === currentGame);
-        if (newCodesForCurrentGame?.codes.length) {
-            setFlash(new Set(newCodesForCurrentGame.codes));
-            setTimeout(() => setFlash(new Set()), 5000);
+    // --- NUEVO EFECTO: Detectar si la ventana está activa ---
+    useEffect(() => {
+        const onFocus = () => setIsFocused(true);
+        const onBlur = () => setIsFocused(false);
+
+        window.addEventListener("focus", onFocus);
+        window.addEventListener("blur", onBlur);
+
+        return () => {
+            window.removeEventListener("focus", onFocus);
+            window.removeEventListener("blur", onBlur);
+        };
+    }, []);
+
+    // --- NUEVO EFECTO: Mostrar toast acumulado al volver a la app ---
+    useEffect(() => {
+        if (isFocused && backgroundRefreshCount > 0) {
+            const message = `Códigos actualizados (x${backgroundRefreshCount})`;
+            if (toast.isActive(REFRESH_TOAST_ID) && toastId.current) {
+                toast.update(toastId.current, { render: message });
+            } else {
+                toastId.current = toast.info(message, { icon: <span>🔄</span>, toastId: REFRESH_TOAST_ID });
+            }
+            setBackgroundRefreshCount(0);
         }
-    } catch (e: any) {
-        setError(e?.message ?? "Error al refrescar");
-        toast.error("Error al refrescar");
-    } finally {
-        setLoading(false);
-    }
-}
+    }, [isFocused, backgroundRefreshCount]);
 
-// Carga inicial y solicitud de permisos de notificación
-useEffect(() => {
-    setLoading(true);
-    refreshAll(false);
 
-    if (typeof Notification !== "undefined" && Notification.permission === "default") {
-        Notification.requestPermission().catch(() => { });
-    }
-}, []);
+    // Carga inicial (sin cambios)
+    useEffect(() => {
+        setLoading(true);
+        refreshAll(false);
+        if (typeof Notification !== "undefined" && Notification.permission === "default") {
+            Notification.requestPermission().catch(() => { });
+        }
+    }, []);
 
-// Efecto para cambiar los datos mostrados cuando cambia el juego
-useEffect(() => {
-    const cachedData = allData[currentGame];
-    if (cachedData) {
-        setData(cachedData);
-    }
-    // Si no está en caché, la carga inicial o el polling lo traerán eventualmente
-}, [currentGame, allData]);
+    // Cambiar de juego (sin cambios)
+    useEffect(() => {
+        const cachedData = allData[currentGame];
+        if (cachedData) setData(cachedData);
+    }, [currentGame, allData]);
 
-// Polling para refrescar todos los códigos cada 60 segundos
-useEffect(() => {
-    const intervalId = setInterval(() => refreshAll(true), 60_000);
-    return () => clearInterval(intervalId);
-}, [currentGame, allData, lastActiveByGame]); // Dependencias para recrear el intervalo si cambian
+    // Polling (dependencias actualizadas)
+    useEffect(() => {
+        const intervalId = setInterval(() => refreshAll(true), 60_000);
+        return () => clearInterval(intervalId);
+    }, [isFocused, allData, lastActiveByGame]);
 
-// Sincronizar los datos del juego actual en la UI
-useEffect(() => {
-    if (allData[currentGame]) {
-        setData(allData[currentGame]!);
-    }
-}, [currentGame, allData]);
+    // Sincronizar datos (sin cambios)
+    useEffect(() => {
+        if (allData[currentGame]) setData(allData[currentGame]!);
+    }, [currentGame, allData]);
 
-return { data, loading, error, flash };
+    return { data, loading, error, flash };
 }
