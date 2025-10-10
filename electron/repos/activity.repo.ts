@@ -1,6 +1,6 @@
 // electron/repos/activity.repo.ts
 import { getDb } from "../core/db";
-import type { GameId } from "../core/types";
+import type { GameId } from "../common/types";
 
 export type ReadCategory = "notices" | "events" | "info";
 
