@@ -1,6 +1,6 @@
 // electron/ipc/codes.ipc.ts
 import { ipcMain } from "electron";
-import type { GameId } from "../core/types";
+import type { GameId } from "../common/types";
 import { listCodes, refreshCodes } from "../services/codes.service";
 
 export function registerCodesIpc() {
