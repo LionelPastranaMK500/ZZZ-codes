@@ -1,7 +1,7 @@
 // electron/services/codes.service.ts
 import { fetchJson } from "../core/http";
 import { API_BASE, TTL } from "../core/env";
-import type { CodesPayload, GameId } from "../core/types";
+import type { CodesPayload, GameId } from "../common/types";
 import { getCache, upsertCache } from "../repos/cache.repo";
 import { logSvc } from "../core/logger";
 

@@ -1,5 +1,5 @@
 // electron/services/scheduler.service.ts
-import type { GameId } from "../core/types";
+import type { GameId } from "../common/types";
 import { refreshCodes } from "./codes.service";
 
 const GAMES: GameId[] = ["genshin", "starrail", "honkai", "themis", "zenless"];
