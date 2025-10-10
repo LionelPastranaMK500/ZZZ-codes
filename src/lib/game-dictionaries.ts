@@ -38,7 +38,7 @@ const DICTS: Record<Game, Record<string, string>> = {
         "Oracle of Justice": "Oráculo de Justicia",
     },
     zenless: {
-        Polychrome: "Policromo",
+        Polychrome: "Películas",
         "Official Investigator Log": "Registro de Investigador Oficial",
         "Senior Investigator Log": "Registro de Investigador Senior",
         "W-Engine Power Supply": "Suministro de energía de W-Engine",
