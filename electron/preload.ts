@@ -1,6 +1,6 @@
 // electron/preload.ts
 import { contextBridge, ipcRenderer } from "electron";
-import type { GameId } from "./core/types";
+import type { GameId } from "./common/types";
 
 contextBridge.exposeInMainWorld("api", {
   codes: {
