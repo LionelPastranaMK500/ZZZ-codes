@@ -1,7 +1,7 @@
 // src/lib/game-dictionaries.ts
-import type { Game } from "../types";
+import type { GameId } from "../../electron/common/types";
 
-const DICTS: Record<Game, Record<string, string>> = {
+const DICTS: Record<GameId, Record<string, string>> = {
     genshin: {
         Primogem: "Protogema",
         Primogems: "Protogemas",
@@ -38,7 +38,8 @@ const DICTS: Record<Game, Record<string, string>> = {
         "Oracle of Justice": "Oráculo de Justicia",
     },
     zenless: {
-        Polychrome: "Películas",
+        Polychrome: "Película",
+        Polychromes: "Películas",
         "Official Investigator Log": "Registro de Investigador Oficial",
         "Senior Investigator Log": "Registro de Investigador Senior",
         "W-Engine Power Supply": "Suministro de energía de W-Engine",
@@ -48,12 +49,12 @@ const DICTS: Record<Game, Record<string, string>> = {
         "Bangboo System Widget": "Widget del sistema Bangboo",
         "Ether Plating Agent": "Agente de recubrimiento de Éter",
         "Ether Battery": "Batería de Éter",
-        Denny: "Denny",
-        Dennies: "Dennies",
+        Denny: "Denique",
+        Dennies: "Deniques",
     },
 };
 
-export function translateReward(line: string, game: Game): string {
+export function translateReward(line: string, game: GameId): string {
     let out = line.replace(/×/g, "x");
     const dict = DICTS[game] ?? {};
     for (const [en, es] of Object.entries(dict)) out = out.replaceAll(en, es);

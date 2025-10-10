@@ -1,7 +1,7 @@
 // src/lib/api-helpers.ts
-import type { CodeItem, Payload } from "../types";
+import type { CodeItem, CodesPayload } from "../../electron/common/types";
 
-export function toPayload(raw: any): Payload {
+export function toPayload(raw: any): CodesPayload {
     const normList = (arr: any[]): CodeItem[] =>
         (arr ?? []).map((x: any) => {
             let rewards: string[] = [];

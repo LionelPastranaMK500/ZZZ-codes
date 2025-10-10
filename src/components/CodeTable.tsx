@@ -1,5 +1,5 @@
 // src/components/CodeTable.tsx
-import type { CodeItem, Game } from "../types";
+import type { CodeItem, GameId } from "../../electron/common/types";
 import { translateReward } from "../lib/game-dictionaries";
 import { CopyButton } from "./CopyButton";
 
@@ -7,7 +7,7 @@ type TabKey = "active" | "inactive";
 
 type CodeTableProps = {
     codes: CodeItem[];
-    game: Game;
+    game: GameId;
     tab: TabKey;
     loading: boolean;
     translate: boolean;

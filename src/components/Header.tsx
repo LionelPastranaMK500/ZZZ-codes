@@ -1,11 +1,11 @@
 // src/components/Header.tsx
-import type { Game } from "../types";
+import type { GameId } from "../../electron/common/types";
 
-const GAMES: Game[] = ["genshin", "starrail", "honkai", "themis", "zenless"];
+const GAMES: GameId[] = ["genshin", "starrail", "honkai", "themis", "zenless"];
 
 type HeaderProps = {
-    selectedGame: Game;
-    onGameChange: (game: Game) => void;
+    selectedGame: GameId;
+    onGameChange: (game: GameId) => void;
 };
 
 export function Header({ selectedGame, onGameChange }: HeaderProps) {
@@ -21,7 +21,7 @@ export function Header({ selectedGame, onGameChange }: HeaderProps) {
                 <select
                     className="bg-gray-800 px-3 py-2 rounded-xl"
                     value={selectedGame}
-                    onChange={(e) => onGameChange(e.target.value as Game)}
+                    onChange={(e) => onGameChange(e.target.value as GameId)}
                 >
                     {GAMES.map((g) => (
                         <option key={g} value={g}>
