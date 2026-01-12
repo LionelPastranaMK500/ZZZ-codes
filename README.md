@@ -1,30 +1,63 @@
-# React + TypeScript + Vite
+⚡ ZZZ Codes - Electron Desktop Automation
+ZZZ Codes es una herramienta de escritorio potente diseñada para centralizar, gestionar y automatizar la obtención de códigos de canje para diversos juegos. Construida sobre Electron, ofrece una experiencia nativa rápida con una arquitectura moderna que separa eficientemente la lógica del sistema (Main Process) de la interfaz de usuario (Renderer).
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+✨ Características Principales
+Gestión de Códigos Multi-Juego: Diccionarios integrados para organizar códigos por diferentes títulos y plataformas.
 
-Currently, two official plugins are available:
+Automatización y Programación: Incluye un servicio de Scheduler para tareas en segundo plano y actualización automática de datos.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Base de Datos Local: Persistencia de datos robusta utilizando repositorios para actividades, preferencias del usuario y caché de red.
 
-## Expanding the ESLint configuration
+Notificaciones Nativas: Sistema de gestión de notificaciones integrado para alertar al usuario sobre nuevos códigos o estados del sistema.
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+Interfaz Ultra-Rápida: Desarrollada con React y Tailwind CSS, optimizada mediante Vite para un rendimiento fluido.
 
-- Configure the top-level `parserOptions` property like this:
+🛠️ Stack Tecnológico
+Core: Electron (Framework para aplicaciones de escritorio).
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
-```
+Frontend: React + TypeScript.
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+Bundler: Vite con integración de Electron.
+
+Estado: Zustand / Custom Stores para la gestión de códigos y preferencias.
+
+Estilos: Tailwind CSS (Diseño moderno y responsivo).
+
+Procesos: Comunicación IPC (Inter-Process Communication) segura entre el Main y el Preload/Renderer.
+
+🏗️ Estructura del Proyecto
+El proyecto está organizado siguiendo los estándares de seguridad de Electron:
+
+Plaintext
+
+├── electron/           # Proceso Principal (Main Process)
+│   ├── core/           # Lógica del sistema (DB, HTTP, Logger, Env)
+│   ├── ipc/            # Definición de canales de comunicación IPC
+│   ├── repos/          # Capa de acceso a datos (Persistencia local)
+│   └── services/       # Servicios de negocio (Codes, Scheduler)
+├── src/                # Proceso de Renderizado (UI - React)
+│   ├── components/     # Componentes de la interfaz (Tablas, Controles)
+│   ├── hooks/          # Hooks personalizados para lógica de UI
+│   └── store/          # Stores de estado global
+└── public/             # Recursos estáticos
+🚀 Instalación y Uso
+Clonar el repositorio:
+
+Bash
+
+git clone https://github.com/tu-usuario/zzz-codes.git
+Instalar dependencias:
+
+Bash
+
+npm install
+Ejecutar en modo desarrollo:
+
+Bash
+
+npm run dev
+Construir aplicación para producción:
+
+Bash
+
+npm run build
